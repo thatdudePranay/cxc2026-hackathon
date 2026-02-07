@@ -1,19 +1,3 @@
-"""Foresight - 3D navigation for visually impaired users."""
+"""Foresight - phone-as-webcam + laptop processing for visually impaired navigation."""
 
-from foresight.costmap import VoxelCostmap
-from foresight.config import (
-    CostmapConfig,
-    DEFAULT_CONFIG,
-    GROUND_LAYER,
-    TORSO_LAYER,
-    HEAD_LAYER,
-)
-
-__all__ = [
-    "VoxelCostmap",
-    "CostmapConfig",
-    "DEFAULT_CONFIG",
-    "GROUND_LAYER",
-    "TORSO_LAYER",
-    "HEAD_LAYER",
-]
+__version__ = "0.1.0"
