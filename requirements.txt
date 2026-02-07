@@ -1,20 +1,29 @@
-# Foresight - Phone-as-Webcam + Laptop Processing
-python-dotenv>=1.0
-# Video
-opencv-python>=4.8
+# Core Dependencies
+opencv-python==4.8.1.78
+numpy==1.24.3
+torch==2.1.0
+torchvision==0.16.0
 
-# Detection + Tracking (YOLOv8 includes ByteTrack)
-ultralytics>=8.0
+# YOLO Object Detection
+ultralytics==8.0.200
 
-# Cloud
-google-generativeai>=0.3
-Pillow>=10.0
+# OCR
+paddleocr==2.7.0
+paddlepaddle==2.5.1
 
-# TTS (local fallback)
-pyttsx3>=2.90
+# Speech Recognition
+openai-whisper==20230918
+sounddevice==0.4.6
+soundfile==0.12.1
 
-# Optional: Google Cloud TTS (set FORESIGHT_GOOGLE_TTS=true)
-# google-cloud-texttospeech>=2.14
+# LLM
+google-generativeai==0.3.1
 
-# Optional: pygame for playing Google TTS audio
-# pygame>=2.5
+# Text-to-Speech
+elevenlabs==0.2.26
+
+# Utilities
+pygame==2.5.2
+pillow==10.1.0
+python-dotenv==1.0.0
+requests==2.31.0
