@@ -1,45 +1,46 @@
-"""Foresight - 3D costmap and SLAM configuration."""
+"""Foresight configuration - API keys and settings."""
 
-from dataclasses import dataclass
-from typing import Tuple
+import os
+from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+except ImportError:
+    pass
 
-@dataclass(frozen=True)
-class CostmapConfig:
-    """3D costmap specifications for visually impaired navigation."""
+# Paths
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-    # Voxel resolution: 10cm cubes
-    voxel_resolution: float = 0.1
+# Video input (DroidCam / webcam)
+CAMERA_INDEX = int(os.getenv("FORESIGHT_CAMERA", "0"))  # 0 = default, or DroidCam virtual device
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+TARGET_FPS = 15
 
-    # Map size: width (x) × depth (y) × height (z) in meters
-    map_size: Tuple[float, float, float] = (20.0, 20.0, 3.0)
+# Detection
+YOLO_MODEL = "yolov8n.pt"  # nano = fastest; use yolov8s.pt for better accuracy
+DETECT_EVERY_N_FRAMES = 2  # Run YOLO every 2nd frame for speed
+CONFIDENCE_THRESHOLD = 0.5
+COLLISION_CLASSES = None  # None = all; or [0, 56, 57] for person, chair, couch
 
-    # Height range: ground to ceiling
-    height_min: float = 0.0
-    height_max: float = 3.0
+# Zone memory (3x3 grid)
+ZONE_GRID = (3, 3)
+ZONE_DECAY_SECONDS = 10  # How long objects stay in memory
 
-    # Inflation safety buffer around obstacles (meters)
-    inflation_radius: float = 0.3
+# Collision
+COLLISION_DISTANCE_THRESHOLD = 0.3  # Normalized bbox size = "close"
+WARNING_COOLDOWN_SECONDS = 2  # Don't spam alerts
 
-    # Voxel states
-    FREE: int = 0
-    OCCUPIED: int = 100
-    UNKNOWN: int = 50
-    INFLATED: int = 75
+# Cloud APIs (set in .env)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
 
-    @property
-    def num_voxels(self) -> Tuple[int, int, int]:
-        """Grid dimensions in voxels."""
-        return (
-            int(self.map_size[0] / self.voxel_resolution),
-            int(self.map_size[1] / self.voxel_resolution),
-            int(self.map_size[2] / self.voxel_resolution),
-        )
+# Scene understanding
+GEMINI_SCENE_INTERVAL_SECONDS = 4
+GEMINI_MODEL = "gemini-2.0-flash"
 
-
-# Height layer boundaries for different body parts (meters)
-GROUND_LAYER = (0.0, 0.3)   # Ankle obstacles
-TORSO_LAYER = (0.3, 1.8)    # Main navigation obstacles
-HEAD_LAYER = (1.8, 2.5)     # Overhead obstacles
-
-DEFAULT_CONFIG = CostmapConfig()
+# TTS
+USE_GOOGLE_TTS = os.getenv("FORESIGHT_GOOGLE_TTS", "false").lower() == "true"
+TTS_LANGUAGE = "en-US"
