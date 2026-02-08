@@ -5,14 +5,15 @@ import asyncio
 import time
 from scipy.io.wavfile import write
 import io
+import os
 
-DEEPGRAM_API_KEY = "21fa262ef6bc0e3ddf5e25a9036994076424b1f2"
-
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 rate = 16000
 chunk_dur = 2
 
 print("Speak into your microphone. Press Ctrl+C to stop.\n")
 
+stop_listening = False
 audio_buffer = []
 last_transcription_time = time.time()
 
@@ -24,7 +25,6 @@ def audio_callback(indata, frames, time_info, status):
 async def transcribe_audio(audio_data):
     deepgram = Deepgram(DEEPGRAM_API_KEY)
     
-    # Create proper WAV file in memory
     wav_buffer = io.BytesIO()
     write(wav_buffer, rate, audio_data)
     wav_bytes = wav_buffer.getvalue()
@@ -47,9 +47,17 @@ async def transcribe_audio(audio_data):
         return response['results']['channels'][0]['alternatives'][0]['transcript']
     return ""
 
-try:
+def listen_and_transcribe():
+    global audio_buffer, last_transcription_time, stop_listening
+    audio_buffer = []
+    last_transcription_time = time.time()
+    stop_listening = False
+    full_transcript = ""
+
+    print("Now listening.")
+    
     with sd.InputStream(samplerate=rate, channels=1, callback=audio_callback, dtype='int16'):
-        while True:
+        while not stop_listening:  # Check if we are still running
             time.sleep(0.1)
             
             current_time = time.time()
@@ -62,9 +70,14 @@ try:
                     
                     if text.strip():
                         print(f"{text}")
+                        full_transcript += " " + text
                     
                     audio_buffer = []
                     last_transcription_time = current_time
+    
+    print("Stopped listening.")
+    return full_transcript.strip()
 
-except KeyboardInterrupt:
-    print("\n\nStopped.")
+def stop():
+    global stop_listening
+    stop_listening = True
