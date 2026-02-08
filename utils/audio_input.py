@@ -1,6 +1,5 @@
 import sounddevice as sd
 import numpy as np
-from scipy.io.wavfile import write
 import whisper
 import time
 
@@ -9,8 +8,9 @@ chunk_dur = 3
 
 model = whisper.load_model("base")
 
-print("Speak into your microphone. Press Ctrl+C to stop.\n")
+print("Speak into your microphone.\n")
 
+stop_listening = False
 audio_buffer = []
 last_transcription_time = time.time()
 
@@ -21,10 +21,17 @@ def audio_callback(indata, frames, time_info, status):
     audio_buffer.append(indata.copy())
 
 # Main logic
-try:
+def listen_and_transcribe():
+    global audio_buffer, last_transcription_time, stop_listening
+    audio_buffer = []
+    last_transcription_time = time.time()
+    stop_listening = False
+    full_transcript = ""
+    
+    print("Now listening.")
+    
     with sd.InputStream(samplerate=rate, channels=1, callback=audio_callback, dtype='int16'):
-        
-        while True:
+        while not stop_listening:
             time.sleep(0.1)
             
             # Check if enough audio collected
@@ -46,9 +53,14 @@ try:
                     text = result['text'].strip()
                     if text:
                         print(f"{text}")
+                        full_transcript += " " + text
                     
                     audio_buffer = []
                     last_transcription_time = current_time
+    
+    print("Stopped listening.")
+    return full_transcript.strip()
 
-except KeyboardInterrupt:
-    print("\n\nStopped.")
+def stop():
+    global stop_listening
+    stop_listening = True
