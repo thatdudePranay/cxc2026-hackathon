@@ -1,9 +1,9 @@
-from elevenlabs import play
 from elevenlabs.client import ElevenLabs
 from pydub import AudioSegment
-from pydub.playback import play as pydub_play
 import io
 import os
+import numpy as np
+import sounddevice as sd
 
 from dotenv import load_dotenv
 
@@ -66,6 +66,28 @@ def apply_panning(audio_bytes, pan_value):
     
     return panned_audio
 
+def play_audio_segment(audio_segment):
+    """
+    Play an AudioSegment using sounddevice (no temp files needed).
+    
+    Args:
+        audio_segment: pydub AudioSegment object
+    """
+    # Convert to numpy array
+    samples = np.array(audio_segment.get_array_of_samples())
+    
+    # Reshape for stereo if needed
+    if audio_segment.channels == 2:
+        samples = samples.reshape((-1, 2))
+    
+    # Normalize to float32 in range [-1.0, 1.0]
+    samples = samples.astype(np.float32) / (2**15)  # 16-bit audio
+    
+    # Play using sounddevice (no temp files)
+    sd.play(samples, samplerate=audio_segment.frame_rate)
+    sd.wait()  # Wait for playback to finish
+
+
 def speak(text, pan=0.0, save_path=None):
     """
     Generate and play text-to-speech with optional panning.
@@ -91,12 +113,12 @@ def speak(text, pan=0.0, save_path=None):
         # Apply panning if not center
         if pan != 0.0:
             panned_audio = apply_panning(audio_bytes, pan)
-            pydub_play(panned_audio)
+            play_audio_segment(panned_audio)
             audio_segment = panned_audio
         else:
-            # Use default play for center audio
-            play(audio_bytes)
+            # Use sounddevice for center audio as well
             audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
+            play_audio_segment(audio_segment)
 
         if save_path:
             dir_path = os.path.dirname(save_path)
