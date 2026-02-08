@@ -18,7 +18,7 @@ Nearby objects (from camera): {yolo_string}
 
 Task:
 1. Figure out what the user is looking for from their speech
-2. Check if it's visible in the OCR text or detected objects
+2. Check if it's visible in the OCR text or detected objects (Ignore any watermark saying USING DROIDCAM.COM)
 3. Provide SHORT, CLEAR navigation instructions if found (e.g., "The Rexall is on your left, walk forward")
 4. If not found, say "I don't see [target] nearby right now"
 
