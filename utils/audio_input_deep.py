@@ -1,13 +1,18 @@
 import sounddevice as sd
 import numpy as np
-from deepgram import Deepgram
+from deepgram import DeepgramClient, PrerecordedOptions
 import asyncio
 import time
 from scipy.io.wavfile import write
 import io
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+
+if not DEEPGRAM_API_KEY:
+    raise ValueError("DEEPGRAM_API_KEY not found in environment variables. Please check your .env file.")
 rate = 16000
 chunk_dur = 2
 
@@ -23,44 +28,59 @@ def audio_callback(indata, frames, time_info, status):
     audio_buffer.append(indata.copy())
 
 async def transcribe_audio(audio_data):
-    deepgram = Deepgram(DEEPGRAM_API_KEY)
-    
-    wav_buffer = io.BytesIO()
-    write(wav_buffer, rate, audio_data)
-    wav_bytes = wav_buffer.getvalue()
-    
-    source = {
-        'buffer': wav_bytes,
-        'mimetype': 'audio/wav'
-    }
-    
-    response = await deepgram.transcription.prerecorded(
-        source,
-        {
-            'model': 'nova-2',
-            'smart_format': True,
-            'language': 'en'
-        }
-    )
-    
-    if response and 'results' in response:
-        return response['results']['channels'][0]['alternatives'][0]['transcript']
-    return ""
+    try:
+        deepgram = DeepgramClient(DEEPGRAM_API_KEY)
+        
+        wav_buffer = io.BytesIO()
+        write(wav_buffer, rate, audio_data)
+        wav_bytes = wav_buffer.getvalue()
+        
+        options = PrerecordedOptions(
+            model='nova-2',
+            smart_format=True,
+            language='en'
+        )
+        
+        response = await deepgram.listen.asyncprerecorded.v("1").transcribe_file(
+            {"buffer": wav_bytes},
+            options
+        )
+        
+        if response and response.results and response.results.channels:
+            return response.results.channels[0].alternatives[0].transcript
+        return ""
+    except Exception as e:
+        print(f"⚠️  Audio input error: {e}")
+        return ""
 
-def listen_and_transcribe():
+def listen_and_transcribe(max_duration=10):
+    """
+    Listen and transcribe audio with automatic timeout.
+    
+    Args:
+        max_duration: Maximum seconds to listen (default 10)
+    """
     global audio_buffer, last_transcription_time, stop_listening
     audio_buffer = []
     last_transcription_time = time.time()
     stop_listening = False
     full_transcript = ""
+    start_time = time.time()
 
     print("Now listening.")
     
     with sd.InputStream(samplerate=rate, channels=1, callback=audio_callback, dtype='int16'):
-        while not stop_listening:  # Check if we are still running
+        while not stop_listening:
             time.sleep(0.1)
             
             current_time = time.time()
+            
+            # Check for timeout
+            if current_time - start_time >= max_duration:
+                print(f"⏱️  Timeout after {max_duration}s")
+                break
+            
+            # Transcribe every chunk_dur seconds
             if current_time - last_transcription_time >= chunk_dur:
                 
                 if len(audio_buffer) > 0:
@@ -74,6 +94,14 @@ def listen_and_transcribe():
                     
                     audio_buffer = []
                     last_transcription_time = current_time
+        
+        # Transcribe any remaining audio in buffer
+        if len(audio_buffer) > 0:
+            audio_data = np.concatenate(audio_buffer, axis=0)
+            text = asyncio.run(transcribe_audio(audio_data))
+            if text.strip():
+                print(f"{text}")
+                full_transcript += " " + text
     
     print("Stopped listening.")
     return full_transcript.strip()
