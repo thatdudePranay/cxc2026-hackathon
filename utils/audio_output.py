@@ -64,7 +64,7 @@ def apply_panning(audio_bytes, pan_value):
     
     return panned_audio
 
-def speak(text, pan=0.0, save_path="audios/hi_right.m4a"):
+def speak(text, pan=0.0, save_path=None):
     """
     Generate and play text-to-speech with optional panning.
     
