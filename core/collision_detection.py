@@ -354,17 +354,21 @@ class CollisionDetector:
             
             # Determine direction for clarity
             if x < CAMERA_WIDTH / 3:
-                dir_str = "from left"
+                dir_str = "FROM LEFT"
+                dir_simple = "LEFT"
             elif x > 2 * CAMERA_WIDTH / 3:
-                dir_str = "from right"
+                dir_str = "FROM RIGHT"
+                dir_simple = "RIGHT"
             else:
-                dir_str = "straight ahead"
+                dir_str = "STRAIGHT AHEAD"
+                dir_simple = "CENTER"
             
             warnings.append({
                 'priority': priority,
                 'message': f"{message} ({dir_str})",
                 'object': tracker.object_info,
                 'direction': direction,
+                'direction_label': dir_simple,  # Add simple direction label
                 'ttc': ttc,
                 'current_distance': distance,
                 'predicted_distance': future_distance,
@@ -507,17 +511,19 @@ class CollisionDetector:
         
         return frame
     
-    def draw_detections_with_collision_risk(self, frame, detections, vision_system):
+    def draw_detections_with_collision_risk(self, frame, detections, vision_system, collision_warnings=None):
         """
         Draw detections with color-coded bounding boxes based on collision risk
+        AND large direction labels for approaching objects
         
         Args:
             frame: OpenCV image (BGR)
             detections: List of detection dicts
             vision_system: VisionSystem instance (for FPS counter)
+            collision_warnings: List of collision warnings (optional)
             
         Returns:
-            Annotated frame with color-coded boxes
+            Annotated frame with color-coded boxes and direction labels
         """
         import cv2
         
@@ -562,7 +568,7 @@ class CollisionDetector:
             
             # Get label size
             (label_width, label_height), _ = cv2.getTextSize(
-                label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2
+                label, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2
             )
             
             # Draw label background
@@ -577,13 +583,13 @@ class CollisionDetector:
             # Draw label text
             cv2.putText(
                 frame, label, (x1, y1 - 5),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2
             )
             
             # Draw alert text if there's a collision risk
             if alert_text and risk_level in ['critical', 'warning', 'approaching']:
                 (alert_width, alert_height), _ = cv2.getTextSize(
-                    alert_text, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2
+                    alert_text, cv2.FONT_HERSHEY_SIMPLEX, 0.9, 2
                 )
                 
                 # Draw alert above the label
@@ -598,14 +604,53 @@ class CollisionDetector:
                 
                 cv2.putText(
                     frame, alert_text, (x1, alert_y - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2
                 )
+        
+        # Draw LARGE direction labels for collision warnings
+        if collision_warnings:
+            for warning in collision_warnings:
+                if warning['priority'] in [0, 1]:  # Critical or Warning
+                    direction_label = warning.get('direction_label', 'CENTER')
+                    
+                    # Position based on direction
+                    if direction_label == "LEFT":
+                        text_x = 50
+                        text_y = CAMERA_HEIGHT // 2
+                        arrow = "◄◄◄"
+                    elif direction_label == "RIGHT":
+                        text_x = CAMERA_WIDTH - 250
+                        text_y = CAMERA_HEIGHT // 2
+                        arrow = "►►►"
+                    else:  # CENTER
+                        text_x = CAMERA_WIDTH // 2 - 150
+                        text_y = CAMERA_HEIGHT // 2
+                        arrow = "▼▼▼"
+                    
+                    # Choose color based on priority
+                    if warning['priority'] == 0:  # Critical
+                        direction_color = (0, 0, 255)  # Red
+                    else:  # Warning
+                        direction_color = (0, 165, 255)  # Orange
+                    
+                    # Draw large direction label with arrow
+                    full_text = f"{arrow} {direction_label} {arrow}"
+                    
+                    # Draw shadow for better visibility
+                    cv2.putText(frame, full_text, (text_x + 3, text_y + 3),
+                              cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 0, 0), 8)
+                    
+                    # Draw main text
+                    cv2.putText(frame, full_text, (text_x, text_y),
+                              cv2.FONT_HERSHEY_SIMPLEX, 2.5, direction_color, 6)
+                    
+                    break  # Only show one direction label (most urgent)
         
         # Draw FPS counter
         if hasattr(vision_system, 'fps'):
             cv2.putText(
-                frame, f"FPS: {vision_system.fps:.1f}", (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2
+                frame, f"FPS: {vision_system.fps:.1f}", (10, 40),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2
             )
         
         return frame
@@ -699,7 +744,7 @@ if __name__ == "__main__":
             
             # Draw detections with collision risk colors
             annotated_frame = collision_detector.draw_detections_with_collision_risk(
-                frame, detections, vision
+                frame, detections, vision, collision_warnings
             )
             
             # Draw trajectories if enabled

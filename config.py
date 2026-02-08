@@ -13,8 +13,8 @@ ELEVENLABS_API_KEY = "DEMO_MACHINE_ONLY"
 
 # Camera settings
 CAMERA_INDEX = 0
-CAMERA_WIDTH = 640
-CAMERA_HEIGHT = 480
+CAMERA_WIDTH = 1280  # Increased from 640
+CAMERA_HEIGHT = 720  # Increased from 480
 CAMERA_FPS = 30
 
 # Detection settings
