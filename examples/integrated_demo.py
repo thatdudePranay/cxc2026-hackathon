@@ -106,10 +106,10 @@ def main():
             # === STEP 4: Visualization ===
             annotated_frame = frame.copy()
             
-            # Draw detection boxes with collision risk colors
+            # Draw detection boxes with collision risk colors and BIG direction labels
             if show_detections:
                 annotated_frame = collision_detector.draw_detections_with_collision_risk(
-                    annotated_frame, detections, vision
+                    annotated_frame, detections, vision, collision_warnings
                 )
             
             # Draw trajectories
