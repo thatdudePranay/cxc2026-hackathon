@@ -22,7 +22,8 @@ def apply_panning(audio_bytes, pan_value):
     
     Args:
         audio_bytes: Audio data as bytes
-        pan_value: Float from -1.0 (full left) to 1.0 (full right), 0.0 is center
+        pan_value: Float from -60 (full left) to 60 (full right), 0 is center.
+                   Values outside -60..60 are clamped, then mapped to -1..1.
     
     Returns:
         Modified audio as AudioSegment
@@ -34,13 +35,14 @@ def apply_panning(audio_bytes, pan_value):
     if audio_segment.channels == 1:
         audio_segment = audio_segment.set_channels(2)
     
+    # Clamp pan_value to -60..60, then map to -1..1 for equal-power panning
+    pan_value = max(-60.0, min(60.0, pan_value))
+    pan_value = pan_value / 60.0  # Map -60..60 to -1..1
+    
     # Calculate left and right channel gains
     # pan_value of -1.0 = full left (left: 0dB, right: -inf dB)
     # pan_value of 0.0 = center (left: 0dB, right: 0dB)
     # pan_value of 1.0 = full right (left: -inf dB, right: 0dB)
-    
-    # Clamp pan_value between -1 and 1
-    pan_value = max(-1.0, min(1.0, pan_value))
     
     # Calculate gain adjustments using equal-power panning
     import math
@@ -70,7 +72,7 @@ def speak(text, pan=0.0, save_path=None):
     
     Args:
         text: Text to speak
-        pan: Float from -1.0 (full left) to 1.0 (full right), 0.0 is center (default)
+        pan: Float from -60 (full left) to 60 (full right), 0 is center (default)
         save_path: Optional path to save audio as MP4/M4A (e.g. "output.m4a")
     """
     if text:
