@@ -650,11 +650,16 @@ class EnhancedVisionSystem:
                         message += f" approaching at {velocity:.1f}m/s"
                     severity = 'CRITICAL'
                 elif obj_name == 'person':
-                    message = f"Person {direction}, {distance:.1f}m"
-                    severity = 'WARNING'
+                    # Only CRITICAL if person is approaching, otherwise just WARNING
+                    if is_approaching:
+                        message = f"Person approaching {direction}, {distance:.1f}m at {velocity:.1f}m/s"
+                        severity = 'CRITICAL'
+                    else:
+                        message = f"Person nearby {direction}, {distance:.1f}m"
+                        severity = 'WARNING'  # Still person, not critical if standing
                 else:
                     message = f"{obj_name.capitalize()} {direction}, {distance:.1f}m"
-                    severity = 'WARNING'
+                    severity = 'CRITICAL' if is_approaching else 'WARNING'
                 
                 alerts.append({
                     'type': 'danger',

@@ -1,6 +1,9 @@
 import os
 import google.generativeai as genai
 
+# {"Velocity: " + str(velocity) + "m/s" if velocity > 0 else ""}
+
+
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-2.5-flash')
 
@@ -94,5 +97,56 @@ Warning (5 words max):"""
     
     response = model.generate_content(prompt)
     warning = response.text.strip()
-        
+    print(warning)
     return warning
+
+# Generate intelligent critical warning from alert data
+def generate_critical_warning(alert):
+    """
+    Takes a critical alert from vision.py and generates an intelligent,
+    concise warning using Gemini.
+    
+    Args:
+        alert: Dict with keys: severity, object, distance, direction, 
+               is_approaching, velocity, message
+    
+    Returns:
+        String with the generated warning (max 10 words)
+    """
+    try:
+        obj_name = alert.get('object', 'object')
+        distance = alert.get('distance', 0)
+        direction = alert.get('direction', 'ahead')
+        is_approaching = alert.get('is_approaching', False)
+        velocity = alert.get('velocity', 0)
+        
+        prompt = f"""Generate an URGENT, SHORT warning (MAX 10 WORDS) for a visually impaired person.
+
+Object: {obj_name}
+Distance: {distance}m
+Direction: {direction}
+Approaching: {is_approaching}
+
+Be CLEAR, DIRECT, and URGENT. Use spatial terms (left, right, ahead, behind).
+Include the distance and action if needed (stop, watch out, caution). Keep in mind that this will be read by TTS,
+so COMPLETELY avoid acronyms like m/s (instead say metres per second). 
+
+Examples:
+- "Stop! Car ahead three meters"
+- "Caution! Person approaching from left"
+- "Watch out! Truck right side two meters"
+
+Warning (10 words max):"""
+        
+        response = model.generate_content(prompt)
+        warning = response.text.strip()
+        
+        # Remove quotes if Gemini added them
+        warning = warning.strip('"').strip("'")
+        
+        return warning
+        
+    except Exception as e:
+        print(f"⚠️  Gemini warning generation failed: {e}")
+        # Fallback to original message
+        return alert.get('message', 'Danger detected')

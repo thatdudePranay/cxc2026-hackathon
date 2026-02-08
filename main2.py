@@ -66,6 +66,7 @@ audio_output_lock = threading.Lock()
 # Text display for on-screen output
 user_input_text = ""
 gemini_output_text = ""
+critical_warning_text = ""  # For displaying critical warnings on screen
 text_lock = threading.Lock()
 
 
@@ -149,6 +150,37 @@ def vision_monitoring_loop(vision_system, ocr_engine):
             cv2.putText(panel, status_text, (10, y_pos),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, status_color, 2)
             y_pos += 40
+            
+            # CRITICAL WARNING banner at top (if active)
+            with text_lock:
+                if critical_warning_text:
+                    # Draw red warning banner
+                    banner_height = 80
+                    banner = np.zeros((banner_height, panel_width, 3), dtype=np.uint8)
+                    banner[:] = (0, 0, 200)  # Red background
+                    
+                    cv2.putText(banner, "!!! CRITICAL WARNING !!!", (10, 25),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                    
+                    # Word wrap warning text
+                    words = critical_warning_text.split()
+                    line = ""
+                    warn_y = 50
+                    for word in words:
+                        test_line = line + word + " "
+                        if len(test_line) > 35:
+                            cv2.putText(banner, line, (10, warn_y),
+                                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                            warn_y += 20
+                            line = word + " "
+                        else:
+                            line = test_line
+                    if line:
+                        cv2.putText(banner, line, (10, warn_y),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                    
+                    # Insert banner at top of panel
+                    panel = np.vstack([banner, panel[banner_height:, :]])
             
             # Draw separator line
             cv2.line(panel, (10, y_pos), (panel_width-10, y_pos), (100, 100, 100), 1)
@@ -241,9 +273,9 @@ def vision_monitoring_loop(vision_system, ocr_engine):
 def check_critical_alerts(vision_data):
     """
     Check for critical warnings (people approaching quickly).
-    Speak immediate alerts with spatial audio.
+    Feed to Gemini for intelligent warnings and speak with spatial audio.
     """
-    global last_critical_alert_time
+    global last_critical_alert_time, critical_warning_text
     
     current_time = time.time()
     
@@ -258,6 +290,9 @@ def check_critical_alerts(vision_data):
     ]
     
     if not critical_alerts:
+        # Clear warning text if no critical alerts
+        with text_lock:
+            critical_warning_text = ""
         return
     
     # Get highest priority alert
@@ -270,8 +305,16 @@ def check_critical_alerts(vision_data):
             pan_angle = det['angle']
             break
     
-    # Speak with spatial audio
-    message = alert['message']
+    # Generate intelligent warning through Gemini
+    from utils.interpret import generate_critical_warning
+    gemini_warning = generate_critical_warning(alert)
+    
+    # Use Gemini's response if available, otherwise use raw message
+    message = gemini_warning if gemini_warning else alert['message']
+    
+    # Update on-screen warning display
+    with text_lock:
+        critical_warning_text = message
     
     # Use threading to avoid blocking vision loop
     def speak_alert():

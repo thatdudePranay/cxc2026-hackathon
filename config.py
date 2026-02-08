@@ -35,7 +35,7 @@ CRITICAL_OBJECTS = {
 }
 
 # Distance thresholds (in meters)
-DANGER_DISTANCE = 2.0
+DANGER_DISTANCE = 2.5
 WARNING_DISTANCE = 4.0
 
 # Collision detection settings
