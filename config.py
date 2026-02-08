@@ -4,8 +4,8 @@ import os
 # API KEYS - Only needed on whichever one we pick for demo machine
 # =============================================================================
 
-GEMINI_API_KEY = "DEMO_MACHINE_ONLY"
-ELEVENLABS_API_KEY = "DEMO_MACHINE_ONLY"
+GEMINI_API_KEY = "AIzaSyBXbwuuX3OJ_3ahBHyjI2AD-VNF8rTCNTw"
+ELEVENLABS_API_KEY = "sk_9cdf884c3d9eb1fb8bf55a200b206aad885f2c6312fc24fc"
 
 # =============================================================================
 # SYSTEM SETTINGS - this is for all of us

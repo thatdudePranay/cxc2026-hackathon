@@ -5,12 +5,16 @@ from pydub.playback import play as pydub_play
 import io
 import os
 
+import imageio_ffmpeg
+AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
+AudioSegment.ffprobe = imageio_ffmpeg.get_ffmpeg_exe()
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Initialize ElevenLabs client with API key from environment
-api_key = os.getenv("ELEVENLABS_API_KEY")
+api_key = "sk_9cdf884c3d9eb1fb8bf55a200b206aad885f2c6312fc24fc"
 if not api_key:
     raise ValueError("ELEVENLABS_API_KEY not found in environment variables")
 
@@ -94,9 +98,8 @@ def speak(text, pan=0.0, save_path=None):
             pydub_play(panned_audio)
             audio_segment = panned_audio
         else:
-            # Use default play for center audio
-            play(audio_bytes)
             audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
+            pydub_play(audio_segment)
 
         if save_path:
             dir_path = os.path.dirname(save_path)
