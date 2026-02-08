@@ -38,6 +38,16 @@ CRITICAL_OBJECTS = {
 DANGER_DISTANCE = 2.0
 WARNING_DISTANCE = 4.0
 
+# Collision detection settings
+COLLISION_LOOKAHEAD_TIME = 3.0  # Predict collisions 3 seconds ahead
+COLLISION_DISTANCE_THRESHOLD = 2.0  # Collision warning distance in meters
+COLLISION_LATERAL_THRESHOLD = 1.5  # Lateral distance threshold in meters
+MAX_TRACKING_LOST_FRAMES = 15  # Remove tracker after N frames without detection
+TRAJECTORY_MATCHING_THRESHOLD = 100  # Max pixel distance for matching objects
+TRAJECTORY_HISTORY_LENGTH = 30  # Number of frames to keep in history (~1 sec at 30fps)
+MIN_MOVEMENT_SPEED = 5.0  # Min pixels/sec to consider object as moving
+MIN_DEPTH_SPEED = 0.1  # Min m/s depth change to consider approaching/receding
+
 # OCR settings
 OCR_INTERVAL = 2.0
 OCR_MIN_CONFIDENCE = 0.7
