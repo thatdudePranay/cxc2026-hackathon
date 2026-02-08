@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key="GEMINI API KEY") # Replace with your actual API key or use environment variable
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Takes in user_speech, ocr_text and yolo_detections to determine if the specified target is nearby
