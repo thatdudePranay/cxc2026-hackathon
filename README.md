@@ -1,4 +1,4 @@
-## WARNING: Please go to main2 branch instead of main. Readme is also extremely outdated.
+## WARNING: Please go to main2 branch instead of main. Readme will be updated further shortly
 
 # Foresight
 
