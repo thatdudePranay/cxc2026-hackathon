@@ -1,5 +1,3 @@
-## WARNING: Please go to main2 branch instead of main. Readme will be updated further shortly
-
 # Foresight
 
 Navigation assistant for visually impaired users. **Phone as webcam** (DroidCam) streams video to a **laptop** that runs detection, tracking, collision alerts, and cloud AI.
